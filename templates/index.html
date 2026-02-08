@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>InterviewGenie | AI Career Coach</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="index-page flex flex-col items-center justify-center p-4 min-h-screen relative overflow-hidden bg-black">
+
+    <div id="particles-js" class="absolute inset-0 z-0"></div>
+
+    <div class="text-center z-10 max-w-5xl hero px-4">
+        <div class="mb-6 inline-block px-5 py-2 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-400 text-xs font-bold tracking-widest uppercase animate-pulse">
+            <i class="fas fa-sparkles mr-2"></i> Powered by Gemini 3 & FAISS
+        </div>
+
+        <h1 class="text-6xl md:text-9xl font-black mb-8 leading-none tracking-tighter text-white">
+            HIRE <span class="text-gradient">GENIUS</span><br>NOT JUST STAFF
+        </h1>
+
+        <p class="text-gray-400 text-lg md:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed">
+            The world's first AI-driven recruitment ecosystem. Master your interviews with real-time coaching or rank 1000+ resumes in seconds.
+        </p>
+
+        <div class="flex flex-col md:flex-row gap-6 justify-center items-center">
+            <a href="{{ url_for('dashboard') }}" 
+               class="group relative btn-main text-lg px-10 py-5 rounded-full transition-all hover:scale-105 inline-block overflow-hidden bg-blue-600">
+                <span class="relative z-10"><i class="fas fa-user-tie mr-2"></i> Candidate Portal</span>
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </a>
+
+            <a href="{{ url_for('bulk_upload') }}" 
+               class="group border border-gray-700 hover:border-blue-500/50 bg-white/5 backdrop-blur-md text-white text-lg px-10 py-5 rounded-full transition-all hover:scale-105 inline-block">
+                <span><i class="fas fa-building mr-2 text-blue-400"></i> Recruiter Mode</span>
+            </a>
+        </div>
+
+        <div class="mt-20 grid grid-cols-3 gap-8 border-t border-gray-800 pt-10">
+            <div>
+                <div class="text-2xl font-bold text-white">Real-Time</div>
+                <div class="text-xs text-gray-500 uppercase tracking-widest">Voice Analysis</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-white">1000+</div>
+                <div class="text-xs text-gray-500 uppercase tracking-widest">Bulk Scanning</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-white">FAISS</div>
+                <div class="text-xs text-gray-500 uppercase tracking-widest">Vector Search</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/particles.js') }}"></script>
+    <script>
+        if(typeof particlesJS !== 'undefined'){
+            particlesJS.load('particles-js', "{{ url_for('static', filename='js/particles.json') }}", function() {
+                console.log('particles.js loaded');
+            });
+        }
+    </script>
+
+    <style>
+        .text-gradient {
+            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .btn-main {
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.3);
+        }
+        .btn-main:hover {
+            box-shadow: 0 0 40px rgba(79, 172, 254, 0.6);
+        }
+    </style>
+</body>
+</html>

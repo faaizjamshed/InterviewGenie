@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live AI Session | InterviewGenie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Pulse Animation for Mic */
+        .pulse-red {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            animation: pulse-red 1.5s infinite;
+            background-color: rgba(239, 68, 68, 0.2) !important;
+            border-color: #ef4444 !important;
+            color: #ef4444 !important;
+        }
+        @keyframes pulse-red {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* Wave Animation for AI Speaking */
+        .speaking .bar { animation: wave 1s ease-in-out infinite; }
+        .bar:nth-child(2) { animation-delay: 0.1s; }
+        .bar:nth-child(3) { animation-delay: 0.2s; }
+        @keyframes wave {
+            0%, 100% { height: 20px; }
+            50% { height: 60px; }
+        }
+        
+        .transcript-container::-webkit-scrollbar { width: 4px; }
+        .transcript-container::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col p-6 overflow-hidden bg-[#050505] text-white">
+
+<header class="flex justify-between items-center mb-6">
+    <div class="text-2xl font-black italic tracking-tighter">I<span class="text-blue-500">G</span></div>
+    <div id="statusBadge" class="px-6 py-1 rounded-full border border-blue-500/30 text-blue-500 text-[10px] font-black tracking-widest uppercase">
+        READY
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="text-gray-500 hover:text-red-400 transition-colors">
+        <i class="fas fa-times-circle text-xl"></i>
+    </a>
+</header>
+
+<div class="flex-1 flex flex-col lg:flex-row gap-8 min-h-0">
+
+    <div class="flex-[2] glass-card flex flex-col items-center justify-center bg-white/5 border border-white/10 p-10 rounded-[3rem] relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none"></div>
+        
+        <div id="visualizer" class="flex items-center gap-3 h-24 mb-10 opacity-50">
+            <div class="bar bg-blue-500 w-3 h-8 rounded-full transition-all"></div>
+            <div class="bar bg-blue-400 w-3 h-16 rounded-full transition-all"></div>
+            <div class="bar bg-blue-300 w-3 h-12 rounded-full transition-all"></div>
+        </div>
+
+        <h2 class="text-4xl font-black tracking-tight mb-2 text-center">
+            Gemini Agent <span class="text-blue-500 text-sm font-mono ml-2 italic">V3.0</span>
+        </h2>
+
+        <p id="aiSubtext" class="text-gray-500 font-medium tracking-wide uppercase text-[10px]">
+            Click the microphone to begin session
+        </p>
+
+        <div id="responseBox" class="mt-10 p-8 max-w-xl text-center text-blue-100 bg-blue-500/10 rounded-3xl border border-blue-500/20 hidden leading-relaxed shadow-2xl backdrop-blur-md">
+        </div>
+    </div>
+
+    <div class="flex-1 flex flex-col gap-6 min-h-0">
+        <div class="glass-card h-64 bg-black border border-white/10 flex flex-col items-center justify-center rounded-[3rem] relative overflow-hidden">
+            <video id="webcam" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover opacity-80"></video>
+            
+            <div id="cameraPlaceholder" class="hidden flex flex-col items-center z-10">
+                <i class="fas fa-video-slash text-5xl text-gray-700"></i>
+                <p class="mt-4 text-[10px] font-bold text-gray-600 uppercase tracking-widest">Camera Off</p>
+            </div>
+            
+            <div id="userPulse" class="absolute w-32 h-32 border-2 border-blue-500 rounded-full animate-ping hidden z-20"></div>
+            
+            <div class="absolute bottom-4 left-6 z-20 flex items-center gap-2">
+                <span class="bg-red-500 w-2 h-2 rounded-full animate-pulse"></span>
+                <span class="text-[10px] font-bold text-white uppercase tracking-widest">Live Feed</span>
+            </div>
+        </div>
+
+        <div class="glass-card flex-1 p-8 flex flex-col bg-white/5 border border-white/10 rounded-[3rem] overflow-hidden">
+            <h4 class="text-[10px] font-black text-blue-500 uppercase mb-4 tracking-[0.2em]">Live Transcript</h4>
+            <div id="transcript" class="transcript-container text-sm text-gray-400 overflow-y-auto flex-1 space-y-4 pr-4">
+                <p class="italic text-gray-700">Waiting for session to start...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="flex justify-center mt-8">
+    <div class="bg-white/5 backdrop-blur-2xl border border-white/10 px-12 py-6 rounded-full flex gap-16 items-center shadow-2xl">
+        <button class="text-gray-600 hover:text-white transition-colors" onclick="toggleVideo()"><i id="videoIcon" class="fas fa-video text-xl"></i></button>
+
+        <button id="micBtn" 
+                class="group w-20 h-20 rounded-full bg-blue-600 border-4 border-black shadow-[0_0_30px_rgba(37,99,235,0.4)] flex items-center justify-center text-3xl transition-all active:scale-90"
+                onclick="toggleMic()">
+            <i id="micIcon" class="fas fa-microphone text-white"></i>
+        </button>
+
+        <button class="text-gray-600 hover:text-white transition-colors"><i class="fas fa-cog text-xl"></i></button>
+    </div>
+</div>
+
+<script>
+let isListening = false;
+let chatHistory = [];
+let cameraStream = null;
+
+// --- CAMERA LOGIC ---
+async function startCamera() {
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        document.getElementById('webcam').srcObject = cameraStream;
+    } catch (err) {
+        console.error("Camera Error: ", err);
+        document.getElementById('cameraPlaceholder').classList.remove('hidden');
+        document.getElementById('webcam').classList.add('hidden');
+    }
+}
+
+function toggleVideo() {
+    if (cameraStream) {
+        const videoTrack = cameraStream.getVideoTracks()[0];
+        videoTrack.enabled = !videoTrack.enabled;
+        document.getElementById('videoIcon').classList.toggle('fa-video');
+        document.getElementById('videoIcon').classList.toggle('fa-video-slash');
+    }
+}
+
+// Start camera on load
+document.addEventListener('DOMContentLoaded', startCamera);
+
+// --- ORIGINAL SPEECH LOGIC ---
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+if (recognition) {
+    recognition.lang = "en-US";
+    recognition.onstart = () => {
+        document.getElementById("statusBadge").innerText = "LISTENING";
+        document.getElementById("statusBadge").classList.replace("text-blue-500", "text-red-500");
+        document.getElementById("micBtn").classList.add("pulse-red");
+        document.getElementById("userPulse").classList.remove("hidden");
+        document.getElementById("micIcon").classList.replace("fa-microphone", "fa-wave-square");
+    };
+
+    recognition.onresult = async (event) => {
+        const text = event.results[0][0].transcript;
+        addTranscript("You", text);
+        await sendToGemini(text);
+    };
+
+    recognition.onend = () => {
+        isListening = false;
+        document.getElementById("statusBadge").innerText = "READY";
+        document.getElementById("statusBadge").classList.replace("text-red-500", "text-blue-500");
+        document.getElementById("micBtn").classList.remove("pulse-red");
+        document.getElementById("micIcon").classList.replace("fa-wave-square", "fa-microphone");
+        document.getElementById("userPulse").classList.add("hidden");
+    };
+}
+
+function toggleMic() {
+    if (!recognition) {
+        alert("Speech recognition not supported.");
+        return;
+    }
+    isListening ? recognition.stop() : recognition.start();
+    isListening = !isListening;
+}
+
+async function sendToGemini(message) {
+    const aiSubtext = document.getElementById("aiSubtext");
+    const responseBox = document.getElementById("responseBox");
+    const visualizer = document.getElementById("visualizer");
+
+    aiSubtext.innerText = "Gemini is thinking...";
+
+    try {
+        const res = await fetch("/api/interview/chat", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({message, history: chatHistory})
+        });
+
+        const data = await res.json();
+        if (data.reply) {
+            chatHistory = data.history || [];
+            responseBox.innerText = data.reply;
+            responseBox.classList.remove("hidden");
+            visualizer.classList.add("speaking");
+            speak(data.reply);
+            addTranscript("AI", data.reply);
+        }
+    } catch (err) {
+        aiSubtext.innerText = "AI temporarily unavailable.";
+    }
+}
+
+function speak(text) {
+    const utter = new SpeechSynthesisUtterance(text);
+    const visualizer = document.getElementById("visualizer");
+    speechSynthesis.speak(utter);
+    utter.onend = () => {
+        visualizer.classList.remove("speaking");
+        document.getElementById("aiSubtext").innerText = "Waiting for response...";
+    };
+}
+
+function addTranscript(role, text) {
+    const container = document.getElementById("transcript");
+    const div = document.createElement("div");
+    div.innerHTML = `<span class="text-[10px] font-black uppercase ${role === 'AI' ? 'text-blue-500' : 'text-gray-500'}">${role}</span>
+                     <p class="${role === 'AI' ? 'text-gray-300' : 'text-gray-500'} mt-1">${text}</p>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+</script>
+</body>
+</html>

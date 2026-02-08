@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bulk Ranker | InterviewGenie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="min-h-screen p-4 md:p-8 bg-[#0a0a0a] text-white">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+            <div>
+                <h1 class="text-4xl font-black italic tracking-tighter uppercase">
+                    RECRUITER <span class="text-gradient">MODE</span>
+                </h1>
+                <p class="text-gray-500 font-medium">Rank hundreds of CVs using FAISS Vector Search.</p>
+            </div>
+            <a href="{{ url_for('dashboard') }}" class="glass-card px-5 py-2 hover:bg-white/10 transition border border-gray-800 rounded-xl text-sm">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+            </a>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="glass-card p-6 h-fit border border-gray-800/50 bg-white/5 rounded-3xl">
+                <div class="mb-6">
+                    <h3 class="text-sm font-bold mb-3 uppercase tracking-widest text-blue-400">1. Target Role</h3>
+                    <input type="text" id="jobDesc" placeholder="e.g. Senior Python Developer" 
+                           class="w-full p-4 bg-black/40 border border-gray-700 rounded-2xl focus:border-blue-500 outline-none text-white transition-all">
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-sm font-bold mb-3 uppercase tracking-widest text-blue-400">2. Source Files</h3>
+                    <label class="group block p-10 border-2 border-dashed border-gray-700 rounded-3xl cursor-pointer hover:border-blue-500/50 transition-all bg-black/20 text-center">
+                        <input type="file" id="bulkInput" class="hidden" multiple accept=".pdf,.docx,.txt">
+                        <i class="fas fa-cloud-upload-alt text-4xl mb-3 text-gray-600 group-hover:text-blue-400 transition-colors"></i>
+                        <p id="fileCount" class="text-sm text-gray-400 font-medium">Drop Resumes Here</p>
+                    </label>
+                </div>
+
+                <button id="rankBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-black text-lg shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-all active:scale-95">
+                    START AI RANKING
+                </button>
+            </div>
+
+            <div class="lg:col-span-2 glass-card p-8 border border-gray-800/50 bg-white/5 rounded-3xl min-h-[500px]">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="text-xl font-bold">Candidate Rankings</h3>
+                    <span id="resultCount" class="text-xs font-mono text-gray-500 italic">0 Results</span>
+                </div>
+
+                <div class="overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-gray-500 text-[10px] uppercase tracking-[0.2em] border-b border-gray-800">
+                                <th class="pb-4 font-black">Rank</th>
+                                <th class="pb-4 font-black">Candidate / Filename</th>
+                                <th class="pb-4 font-black text-center">AI Match</th>
+                                <th class="pb-4 font-black text-right">Verdict</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTable" class="divide-y divide-gray-900/50">
+                            </tbody>
+                    </table>
+                </div>
+
+                <div id="loader" class="hidden text-center py-20">
+                    <div class="relative inline-block">
+                        <div class="w-16 h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+                        <i class="fas fa-brain absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-blue-400"></i>
+                    </div>
+                    <p class="mt-4 text-blue-400 font-bold animate-pulse tracking-widest text-xs uppercase">Computing Vector Embeddings...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const bulkInput = document.getElementById('bulkInput');
+        const fileCount = document.getElementById('fileCount');
+        const rankBtn = document.getElementById('rankBtn');
+        const resultsTable = document.getElementById('resultsTable');
+        const loader = document.getElementById('loader');
+        const resultCountLabel = document.getElementById('resultCount');
+
+        bulkInput.addEventListener('change', () => {
+            const count = bulkInput.files.length;
+            fileCount.innerText = count > 0 ? `${count} files ready to scan` : "Select Multiple Files";
+            fileCount.classList.add('text-blue-400');
+        });
+
+        rankBtn.addEventListener('click', async () => {
+            const files = bulkInput.files;
+            const jd = document.getElementById('jobDesc').value;
+
+            if (files.length === 0 || !jd) {
+                alert("Please select files and enter a Job Description!");
+                return;
+            }
+
+            resultsTable.innerHTML = '';
+            loader.classList.remove('hidden');
+            rankBtn.disabled = true;
+            rankBtn.innerText = "PROCESSING...";
+
+            const formData = new FormData();
+            formData.append("job_description", jd);
+            for (let i = 0; i < files.length; i++) {
+                formData.append("resumes", files[i]);
+            }
+
+            try {
+                const response = await fetch("/api/analyze-bulk", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await response.json();
+
+                loader.classList.add('hidden');
+                rankBtn.disabled = false;
+                rankBtn.innerText = "START AI RANKING";
+
+                if (data.rankings) {
+                    resultCountLabel.innerText = `${data.rankings.length} Candidates Ranked`;
+                    data.rankings.forEach((cand, index) => {
+                        const scoreColor = cand.score > 80 ? 'text-green-400' : (cand.score > 50 ? 'text-blue-400' : 'text-yellow-400');
+                        const row = `
+                            <tr class="group hover:bg-white/[0.02] transition-colors">
+                                <td class="py-5 font-black text-xl italic ${index < 3 ? 'text-blue-500' : 'text-gray-700'}">#${index + 1}</td>
+                                <td class="py-5">
+                                    <div class="text-sm font-bold text-gray-200">${cand.filename}</div>
+                                    <div class="text-[10px] text-gray-600 uppercase">Resume Found</div>
+                                </td>
+                                <td class="py-5 text-center">
+                                    <div class="inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                                        <span class="${scoreColor} font-mono font-bold">${cand.score}%</span>
+                                    </div>
+                                </td>
+                                <td class="py-5 text-right">
+                                    <span class="text-[10px] font-black uppercase px-2 py-1 ${cand.score > 80 ? 'bg-green-500/10 text-green-500' : 'bg-gray-500/10 text-gray-500'} rounded border ${cand.score > 80 ? 'border-green-500/20' : 'border-gray-500/20'}">
+                                        ${cand.score > 80 ? 'Shortlisted' : 'Reviewed'}
+                                    </span>
+                                </td>
+                            </tr>
+                        `;
+                        resultsTable.innerHTML += row;
+                    });
+                }
+            } catch (err) {
+                alert("Error ranking resumes.");
+                loader.classList.add('hidden');
+                rankBtn.disabled = false;
+                rankBtn.innerText = "START AI RANKING";
+            }
+        });
+    </script>
+
+    <style>
+        .text-gradient {
+            background: linear-gradient(to right, #3b82f6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</body>
+</html>

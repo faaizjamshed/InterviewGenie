@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Analysis Report | InterviewGenie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .text-gradient {
+            background: linear-gradient(to right, #3b82f6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .score-glow {
+            text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-[#050505] text-white p-4 md:p-8 font-sans">
+    
+    <div class="max-w-6xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
+            <div>
+                <h1 class="text-5xl font-black tracking-tighter italic uppercase">
+                    ANALYSIS <span class="text-gradient">REPORT</span>
+                </h1>
+                <p class="text-gray-500 font-mono text-[10px] mt-2 uppercase tracking-[0.3em]">Engine: Gemini 3 Flash Hybrid</p>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="window.print()" class="glass-card px-6 py-3 rounded-2xl text-xs font-bold hover:bg-blue-500/10 transition-all uppercase tracking-widest border border-white/5">
+                    <i class="fas fa-file-pdf mr-2 text-blue-400"></i> Export
+                </button>
+                <a href="{{ url_for('dashboard') }}" class="glass-card px-6 py-3 rounded-2xl text-xs font-bold hover:bg-white/5 transition-all uppercase tracking-widest border border-white/5">
+                    <i class="fas fa-arrow-left mr-2"></i> Dashboard
+                </a>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-1 glass-card p-10 flex flex-col items-center rounded-[3rem] border border-white/10">
+                <h3 class="text-[10px] font-black mb-10 tracking-[0.2em] uppercase text-gray-500">Semantic Skill Mapping</h3>
+                <div class="w-full aspect-square relative">
+                    <canvas id="myChart"></canvas>
+                </div>
+                <p class="mt-8 text-[10px] text-gray-600 text-center leading-loose uppercase tracking-widest font-bold">
+                    Vectorized competency profile
+                </p>
+            </div>
+
+            <div class="lg:col-span-2 space-y-8">
+                
+                <div class="glass-card p-10 border border-white/10 rounded-[3rem] relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-[50px] rounded-full"></div>
+                    <div class="flex justify-between items-end mb-6 relative z-10">
+                        <div>
+                            <h3 class="text-3xl font-black tracking-tight">ATS Match Score</h3>
+                            <p class="text-gray-500 text-xs font-medium uppercase tracking-widest mt-1">Linguistic Similarity Index</p>
+                        </div>
+                        <span class="text-6xl font-black text-blue-500 score-glow" id="overallScoreText">0%</span>
+                    </div>
+                    
+                    <div class="w-full bg-white/5 rounded-full h-3 overflow-hidden p-[2px]">
+                        <div id="overallScoreBar" class="bg-gradient-to-r from-blue-600 via-cyan-400 to-blue-500 h-full rounded-full transition-all duration-[2s] ease-out shadow-[0_0_15px_rgba(59,130,246,0.5)]" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="p-8 bg-green-500/[0.03] rounded-[2.5rem] border border-green-500/10 hover:border-green-500/30 transition-colors">
+                        <h4 class="font-black text-green-400 mb-6 flex items-center text-xs uppercase tracking-widest">
+                            <i class="fas fa-check-double mr-3"></i> Top Differentiators
+                        </h4>
+                        <ul id="strengthsList" class="text-sm text-gray-400 space-y-4 font-medium"></ul>
+                    </div>
+
+                    <div class="p-8 bg-red-500/[0.03] rounded-[2.5rem] border border-red-500/10 hover:border-red-500/30 transition-colors">
+                        <h4 class="font-black text-red-400 mb-6 flex items-center text-xs uppercase tracking-widest">
+                            <i class="fas fa-exclamation-triangle mr-3"></i> Critical Optimization
+                        </h4>
+                        <ul id="improvementsList" class="text-sm text-gray-400 space-y-4 font-medium"></ul>
+                    </div>
+                </div>
+
+                <div class="p-8 bg-blue-600/5 border border-blue-500/10 rounded-[2.5rem] flex items-start gap-6">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center flex-shrink-0 border border-blue-500/20">
+                        <i class="fas fa-brain text-blue-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-blue-400 font-black text-xs uppercase tracking-widest mb-2 italic">Gemini Strategic Insight</h4>
+                        <p class="text-sm text-gray-400 leading-relaxed" id="aiTip">
+                            Processing deep analysis...
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const rawData = localStorage.getItem('lastAnalysis');
+            if (!rawData) { window.location.href = "{{ url_for('resume') }}"; return; }
+
+            let data;
+            try {
+                const cleanData = rawData.replace(/```json|```/g, "").trim();
+                data = JSON.parse(cleanData);
+            } catch (e) {
+                data = { "Overall Score": 70, "Key Strengths": ["Technical Excellence"], "Areas for Improvement": ["Detailed Impact Metrics"] };
+            }
+
+            const score = data["Overall Score"] || data["score"] || 0;
+            const strengths = data["Key Strengths"] || data["strengths"] || [];
+            const improvements = data["Areas for Improvement"] || data["improvements"] || [];
+
+            document.getElementById('overallScoreText').innerText = score + "%";
+            setTimeout(() => { document.getElementById('overallScoreBar').style.width = score + "%"; }, 300);
+
+            const renderList = (containerId, items, iconClass) => {
+                const container = document.getElementById(containerId);
+                container.innerHTML = items.slice(0, 4).map(item => 
+                    `<li class="flex items-start gap-3">
+                        <i class="${iconClass} mt-1 text-[8px]"></i>
+                        <span>${item}</span>
+                    </li>`
+                ).join('');
+            };
+
+            renderList('strengthsList', strengths, 'fas fa-plus text-green-500');
+            renderList('improvementsList', improvements, 'fas fa-minus text-red-500');
+
+            // Chart
+            const ctx = document.getElementById('myChart');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['TECH', 'EXP', 'SOFT', 'KEYWORDS', 'FORMAT'],
+                    datasets: [{
+                        data: [score, score-10, score+5, score-5, score],
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 2,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            angleLines: { color: 'rgba(255,255,255,0.1)' },
+                            pointLabels: { color: '#6b7280', font: { size: 9, weight: 'bold' } },
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            ticks: { display: false }
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

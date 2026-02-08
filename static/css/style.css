@@ -1,0 +1,258 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+/* ===============================
+   COLORS & VARIABLES
+================================ */
+:root {
+  --gemini-gradient: linear-gradient(135deg, #4b90ff 0%, #ff5546 100%);
+  --gemini-blue: #4b90ff;
+  --gemini-purple: #8b5cf6;
+  --dark-bg: #050505;
+  --card-bg: rgba(15, 20, 35, 0.75);
+  --border-color: rgba(75, 144, 255, 0.2);
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
+  --glow-primary: rgba(75,144,255,0.45);
+  --glow-secondary: rgba(255,85,70,0.35);
+}
+
+/* ===============================
+   BODY & BACKGROUND
+================================ */
+body {
+  background:
+    radial-gradient(circle at 50% 50%, #0a1b2b 0%, #050a14 100%);
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  overflow-x: hidden;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* HERO PAGE SPECIAL PREMIUM BG */
+body.index-page {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(75,144,255,0.15), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(255,85,70,0.12), transparent 40%),
+    linear-gradient(135deg, #020205 0%, #050a14 50%, #020205 100%);
+}
+
+/* Cyber grid */
+body::before {
+  content: "";
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background-image:
+    linear-gradient(rgba(75,144,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(75,144,255,0.04) 1px, transparent 1px);
+  background-size: 50px 50px;
+  z-index: -2;
+  mask-image: radial-gradient(circle at center, black 30%, transparent 90%);
+}
+
+/* Rotating nebula glow */
+body::after {
+  content: "";
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(circle, rgba(75,144,255,0.06) 0%, transparent 60%);
+  z-index: -3;
+  animation: rotateBg 30s linear infinite;
+}
+
+@keyframes rotateBg {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===============================
+   TEXT GRADIENT
+================================ */
+.text-gradient {
+  background: var(--gemini-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text; /* standard */
+  color: transparent;      /* fallback */
+  font-weight: 800;
+}
+
+
+/* Hero heading glow */
+.hero h1 {
+  text-shadow: 0 0 40px rgba(75,144,255,0.25);
+}
+
+/* ===============================
+   GLASS CARDS
+================================ */
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(25px);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  transition: 0.4s;
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card:hover {
+  border-color: rgba(75,144,255,0.5);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 50px rgba(75,144,255,0.25);
+}
+
+/* ===============================
+   MAIN BUTTON (UPDATED)
+================================ */
+.btn-main {
+  background: linear-gradient(135deg, #4b90ff, #8b5cf6);
+  color: white;
+  padding: 14px 36px;
+  border-radius: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: 0.4s;
+  box-shadow: 0 0 25px rgba(75,144,255,0.5);
+}
+
+.btn-main:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow:
+    0 0 40px rgba(75,144,255,0.6),
+    0 0 80px rgba(139,92,246,0.5);
+}
+
+/* Shine effect */
+.btn-main::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,0.4),
+    transparent
+  );
+  opacity: 0;
+}
+
+.btn-main:hover::before {
+  opacity: 1;
+  animation: shine 1.5s linear infinite;
+}
+
+@keyframes shine {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+/* ===============================
+   AUDIO BARS
+================================ */
+.bar {
+  width: 6px;
+  height: 15px;
+  background: var(--gemini-blue);
+  border-radius: 10px;
+  animation: sound 0.6s infinite alternate;
+}
+
+@keyframes sound {
+  0% { height: 10px; opacity: 0.3; }
+  100% {
+    height: 45px;
+    opacity: 1;
+    box-shadow: 0 0 15px var(--gemini-blue);
+  }
+}
+
+/* ===============================
+   MIC BUTTON
+================================ */
+.mic-btn {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--gemini-blue), var(--gemini-purple));
+  box-shadow: 0 0 35px var(--glow-primary);
+  border: none;
+  cursor: pointer;
+}
+
+/* ===============================
+   UPLOAD AREA
+================================ */
+.upload-area {
+  border: 2px dashed rgba(75,144,255,0.3);
+  border-radius: 20px;
+  transition: 0.3s;
+}
+
+.upload-area:hover {
+  border-color: var(--gemini-blue);
+  background: rgba(75,144,255,0.05);
+  transform: scale(1.02);
+}
+
+/* ===============================
+   SCAN LINE
+================================ */
+#scanLine {
+  box-shadow: 0 0 20px var(--gemini-blue);
+  transition: top 0.2s ease;
+}
+
+/* ===============================
+   PROGRESS BAR
+================================ */
+.progress-bar {
+  width: 100%;
+  background: rgba(255,255,255,0.1);
+  height: 8px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.progress-bar-inner {
+  height: 100%;
+  background: var(--gemini-blue);
+  border-radius: 8px;
+}
+
+/* ===============================
+   PARTICLES (OPTIONAL)
+================================ */
+.particle {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  position: fixed;
+  z-index: -1;
+  background: rgba(75,144,255,0.25);
+  animation: moveUp 10s linear infinite;
+}
+
+@keyframes moveUp {
+  0% { transform: translateY(0); opacity: 0; }
+  50% { opacity: 0.5; }
+  100% { transform: translateY(-200px); opacity: 0; }
+}
+
+/* ===============================
+   RESPONSIVE
+================================ */
+@media (max-width: 768px) {
+  .hero h1 { font-size: 3rem; }
+}
